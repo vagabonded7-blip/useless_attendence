@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "author": "Attendance project",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "wokwi-arduino-uno",
+      "id": "uno",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-servo",
+      "id": "motor",
+      "top": -10,
+      "left": 270,
+      "attrs": {}
+    }
+  ],
+  "connections": [
+    [ "uno:9", "motor:PWM", "green", [] ],
+    [ "uno:5V", "motor:V+", "red", [] ],
+    [ "uno:GND.1", "motor:GND", "black", [] ]
+  ],
+  "dependencies": {}
+}
