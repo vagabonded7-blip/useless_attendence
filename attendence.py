@@ -6,8 +6,8 @@ import subprocess
 import threading
 import time
 import tkinter as tk
-import webbrowser
 import winsound
+import wave
 from pathlib import Path
 from tkinter import messagebox, simpledialog
 
@@ -17,7 +17,7 @@ from PIL import Image, ImageTk, UnidentifiedImageError
 
 ADB_PATH = Path(__file__).parent / "platform-tools" / "adb.exe"
 FACE_MODEL_PATH = Path(__file__).parent / "models" / "haarcascade_frontalface_default.xml"
-PAPPU_CUTOUT_PATH = Path(__file__).parent / "pappu cutout.png"
+PAPPU_CUTOUT_PATH = Path(__file__).parent / "pappuvideo.mp4"
 VOICE_PATH = Path(__file__).parent / "pappu.wav"
 FLOWER_STICKER_PATH = Path(__file__).parent / "flower_sticker.png"
 SNAPSHOT_DIR = Path(__file__).parent / "snapshots"
@@ -25,9 +25,6 @@ SNAPSHOT_DIR = Path(__file__).parent / "snapshots"
 CALL_WAIT_SECONDS = 60
 CALL_AUDIO_FALLBACK_SECONDS = 10
 ADB_RECONNECT_SECONDS = 8
-PROMPT = "Pappu is speaking..."
-WAITING_MESSAGE = "Ain't it hot, have some kaatt"
-WOKWI_PROJECT_URL = os.environ.get("WOKWI_PROJECT_URL", "")
 
 
 def normalize_phone_number(value: str) -> str:
@@ -62,6 +59,7 @@ def run_adb_optional(*arguments: str) -> str:
 def ensure_adb_device(timeout: int = ADB_RECONNECT_SECONDS) -> None:
 	"""Refresh ADB and wait briefly for an authorized phone to reappear."""
 	deadline = time.monotonic() + timeout
+	last_status = "not detected"
 	while time.monotonic() < deadline:
 		result = subprocess.run(
 			[str(ADB_PATH), "devices"],
@@ -70,9 +68,17 @@ def ensure_adb_device(timeout: int = ADB_RECONNECT_SECONDS) -> None:
 		)
 		if re.search(r"\n[^\s]+\s+device(?:\s|$)", result.stdout):
 			return
+		if re.search(r"\n[^\s]+\s+unauthorized(?:\s|$)", result.stdout):
+			last_status = "unauthorized"
+		elif re.search(r"\n[^\s]+\s+offline(?:\s|$)", result.stdout):
+			last_status = "offline"
 		subprocess.run([str(ADB_PATH), "reconnect", "device"], capture_output=True, text=True)
 		time.sleep(1)
-	raise RuntimeError("Android phone is not authorized. Reconnect USB and accept USB debugging.")
+	if last_status == "offline":
+		raise RuntimeError("Android phone is offline. Unlock it, reconnect the USB cable, and accept USB debugging.")
+	if last_status == "unauthorized":
+		raise RuntimeError("Android phone is not authorized. Unlock it and accept the USB debugging prompt.")
+	raise RuntimeError("Android phone was not detected. Check the USB cable and USB debugging.")
 
 
 def start_call(phone_number: str) -> None:
@@ -117,31 +123,19 @@ def play_voice_message() -> None:
 	winsound.PlaySound(str(VOICE_PATH), winsound.SND_FILENAME)
 
 
-def show_waiting_screen() -> tk.Toplevel:
-	window = tk.Toplevel()
-	window.title("Waiting for the call")
-	window.geometry("560x220")
-	window.configure(bg="#fff7ed")
-	window.protocol("WM_DELETE_WINDOW", window.destroy)
-	tk_label = tk.Label(
-		window,
-		text=WAITING_MESSAGE,
-		bg="#fff7ed",
-		fg="#9a3412",
-		font=("Segoe UI", 24, "bold"),
-		wraplength=500,
-		justify="center",
-	)
-	tk_label.pack(expand=True, padx=24, pady=24)
-	return window
+def voice_message_duration() -> float:
+	with wave.open(str(VOICE_PATH), "rb") as audio:
+		return audio.getnframes() / audio.getframerate()
 
 
-def open_wokwi_simulation() -> None:
-	if WOKWI_PROJECT_URL:
-		webbrowser.open(WOKWI_PROJECT_URL)
-
-
-def show_visual_screen(title: str, message: str, image_path: Path, background: str, foreground: str) -> tk.Toplevel:
+def show_visual_screen(
+	title: str,
+	message: str,
+	image_path: Path,
+	background: str,
+	foreground: str,
+	audio_path: Path | None = None,
+) -> tk.Toplevel:
 	visual_window = tk.Toplevel()
 	visual_window.title(title)
 	visual_window.geometry("640x480")
@@ -151,7 +145,11 @@ def show_visual_screen(title: str, message: str, image_path: Path, background: s
 	label.pack(expand=True, pady=(20, 4))
 	animation = None
 	try:
-		animation = GifAnimation(visual_window, label, image_path)
+		if image_path.suffix.lower() == ".mp4":
+			# MP4 audio is intentionally muted; the WAV file is played separately.
+			animation = VideoAnimation(visual_window, label, image_path, None)
+		else:
+			animation = GifAnimation(visual_window, label, image_path)
 		visual_window.animation = animation
 		animation.start()
 	except (OSError, UnidentifiedImageError, tk.TclError):
@@ -162,6 +160,51 @@ def show_visual_screen(title: str, message: str, image_path: Path, background: s
 			justify="center",
 		)
 	return visual_window
+
+
+class VideoAnimation:
+	def __init__(self, window: tk.Toplevel, label: tk.Label, path: Path, audio_path: Path | None = None) -> None:
+		self.window = window
+		self.label = label
+		self.path = path
+		self.audio_path = audio_path
+		self.capture = cv2.VideoCapture(str(path))
+		if not self.capture.isOpened():
+			self.capture.release()
+			raise OSError(f"Could not open video: {path}")
+		self.fps = max(self.capture.get(cv2.CAP_PROP_FPS), 1.0)
+		self.after_id: str | None = None
+		self.audio_thread: threading.Thread | None = None
+
+	def start(self) -> None:
+		if self.audio_path is not None:
+			if not self.audio_path.exists():
+				raise OSError(f"Audio file was not found at: {self.audio_path}")
+			self.audio_thread = threading.Thread(target=self.play_audio, daemon=True)
+			self.audio_thread.start()
+		self.show_frame()
+
+	def play_audio(self) -> None:
+		winsound.PlaySound(str(self.audio_path), winsound.SND_FILENAME)
+
+	def show_frame(self) -> None:
+		if not self.window.winfo_exists():
+			self.capture.release()
+			winsound.PlaySound(None, winsound.SND_PURGE)
+			return
+		success, frame = self.capture.read()
+		if not success:
+			self.capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
+			success, frame = self.capture.read()
+		if success:
+			frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+			image = Image.fromarray(frame)
+			image.thumbnail((600, 380), Image.Resampling.LANCZOS)
+			photo = ImageTk.PhotoImage(image)
+			self.label.configure(image=photo)
+			self.label.image = photo
+		self.after_id = self.window.after(max(15, int(1000 / self.fps)), self.show_frame)
+
 
 
 class GifAnimation:
@@ -202,8 +245,9 @@ def apply_sticker(frame, x: int, y: int, width: int, height: int):
 	sticker_width = max(int(width * 0.55), 1)
 	sticker_height = max(int(sticker.shape[0] * sticker_width / sticker.shape[1]), 1)
 	sticker = cv2.resize(sticker, (sticker_width, sticker_height), interpolation=cv2.INTER_AREA)
-	anchor_x = x + width - int(sticker_width * 0.35)
-	anchor_y = y + int(height * 0.05) - int(sticker_height * 0.65)
+	# Place the flower sticker very close to the right ear of the detected face.
+	anchor_x = x + width - int(sticker_width * 0.95)
+	anchor_y = y + int(height * 0.12) - int(sticker_height * 0.05)
 	start_x = max(0, anchor_x)
 	start_y = max(0, anchor_y)
 	end_x = min(frame.shape[1], anchor_x + sticker_width)
@@ -223,7 +267,7 @@ def apply_sticker(frame, x: int, y: int, width: int, height: int):
 def show_prompt_screen() -> tk.Toplevel:
 	return show_visual_screen(
 		"Question",
-		PROMPT,
+		"",
 		PAPPU_CUTOUT_PATH,
 		"#fff7ed",
 		"#9a3412",
@@ -270,7 +314,7 @@ class AttendanceApp:
 		self.busy = False
 		self.running = True
 		self.prompt_window: tk.Toplevel | None = None
-		self.waiting_window: tk.Toplevel | None = None
+		self.prompt_after_id: str | None = None
 		self.snapshot_path: Path | None = None
 		self.snapshot_taken = False
 		self.status = tk.StringVar(value="Looking for a face...")
@@ -295,12 +339,12 @@ class AttendanceApp:
 		gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 		faces = self.detector.detectMultiScale(gray, 1.1, 5, minSize=(60, 60))
 		self.face_found = len(faces) > 0
+		snapshot_frame = frame.copy()
 		for x, y, width, height in faces:
 			cv2.rectangle(frame, (x, y), (x + width, y + height), (0, 200, 0), 3)
 		if self.face_found and not self.snapshot_taken:
 			SNAPSHOT_DIR.mkdir(exist_ok=True)
 			self.snapshot_path = SNAPSHOT_DIR / time.strftime("face_%Y%m%d_%H%M%S.jpg")
-			snapshot_frame = frame.copy()
 			for x, y, width, height in faces:
 				snapshot_frame = apply_sticker(snapshot_frame, x, y, width, height)
 			self.snapshot_taken = cv2.imwrite(str(self.snapshot_path), snapshot_frame)
@@ -334,12 +378,14 @@ class AttendanceApp:
 			except ValueError as error:
 				messagebox.showerror("Invalid phone number", str(error))
 				return
-			self.status.set("Number saved. Press Space to start the call.")
-			self.waiting_window = show_waiting_screen()
-			open_wokwi_simulation()
+			self.start_call()
+			return
+		self.start_call()
+
+	def start_call(self) -> None:
+		if self.busy or self.phone_number is None:
 			return
 		self.busy = True
-		self.close_waiting_screen()
 		self.status.set("Calling... keep the phone on speakerphone near the PC speaker.")
 		threading.Thread(target=self.call_workflow, daemon=True).start()
 
@@ -350,22 +396,15 @@ class AttendanceApp:
 			wait_for_call_active()
 			self.root.after(0, self.open_prompt_screen)
 			self.root.after(0, lambda: self.status.set("Call answered. Playing the voice message..."))
-			time.sleep(1)
-			play_voice_message()
-			self.root.after(0, self.close_prompt_screen)
-			snapshot_path = self.snapshot_path
-			if snapshot_path is not None:
-				self.root.after(0, lambda: show_snapshot_screen(snapshot_path))
-			self.root.after(0, lambda: self.status.set("Call message played. Ready for the next person."))
 		except Exception as error:
 			self.root.after(0, lambda: messagebox.showerror("Call failed", str(error)))
 			self.root.after(0, lambda: self.status.set("Call failed. Check the phone and ADB connection."))
+			self.root.after(0, self.reset_for_next_person)
 		finally:
 			try:
 				ensure_adb_device()
 			except RuntimeError:
 				pass
-			self.root.after(0, self.reset_for_next_person)
 
 	def reset_for_next_person(self) -> None:
 		self.busy = False
@@ -375,20 +414,39 @@ class AttendanceApp:
 
 	def open_prompt_screen(self) -> None:
 		self.prompt_window = show_prompt_screen()
+		self.root.after(250, self.play_prompt_audio)
+		try:
+			duration_ms = max(100, int(voice_message_duration() * 1000))
+		except (OSError, wave.Error, ZeroDivisionError):
+			duration_ms = 1000
+		self.prompt_after_id = self.root.after(duration_ms, self.finish_prompt_screen)
+
+	def play_prompt_audio(self) -> None:
+		try:
+			play_voice_message()
+		except RuntimeError:
+			pass
+
+	def finish_prompt_screen(self) -> None:
+		self.prompt_after_id = None
+		self.close_prompt_screen()
+		snapshot_path = self.snapshot_path
+		if snapshot_path is not None:
+			show_snapshot_screen(snapshot_path)
+		self.status.set("Call message played. Ready for the next person.")
+		self.reset_for_next_person()
 
 	def close_prompt_screen(self) -> None:
+		if self.prompt_after_id is not None:
+			self.root.after_cancel(self.prompt_after_id)
+			self.prompt_after_id = None
 		if self.prompt_window is not None and self.prompt_window.winfo_exists():
 			self.prompt_window.destroy()
 		self.prompt_window = None
 
-	def close_waiting_screen(self) -> None:
-		if self.waiting_window is not None and self.waiting_window.winfo_exists():
-			self.waiting_window.destroy()
-		self.waiting_window = None
-
 	def close(self) -> None:
 		self.running = False
-		self.close_waiting_screen()
+		self.close_prompt_screen()
 		self.camera.release()
 		cv2.destroyAllWindows()
 		self.root.destroy()
