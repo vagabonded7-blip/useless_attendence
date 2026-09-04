@@ -13,7 +13,7 @@ from pathlib import Path
 from tkinter import messagebox, simpledialog
 
 import cv2
-from PIL import Image, ImageTk, UnidentifiedImageError
+from PIL import Image, ImageOps, ImageTk, UnidentifiedImageError
 
 
 ADB_PATH = Path(__file__).parent / "platform-tools" / "adb.exe"
@@ -307,8 +307,7 @@ def show_snapshot_screen(snapshot_path: Path) -> tk.Toplevel:
 	image_canvas.pack(expand=True, padx=20, pady=(0, 20))
 	try:
 		with Image.open(snapshot_path) as source:
-			image = source.convert("RGB")
-			image.thumbnail((600, 420), Image.Resampling.LANCZOS)
+			image = ImageOps.fit(source.convert("RGB"), (600, 420), method=Image.Resampling.LANCZOS)
 			photo = ImageTk.PhotoImage(image)
 		image_canvas.create_image(300, 210, image=photo)
 		image_canvas.image = photo
