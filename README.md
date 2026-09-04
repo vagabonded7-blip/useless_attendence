@@ -21,7 +21,7 @@
 [What ridiculous problem are you solving?]
 
 ### The Solution (that nobody asked for)
-[How are you solving it? Keep it fun!]
+[The system detects a face, starts an attendance call through an Android phone, plays a funny video and voice message, then captures a flower-decorated snapshot as proof of attendance.]
 
 ## Technical Details
 ### Technologies/Components Used
