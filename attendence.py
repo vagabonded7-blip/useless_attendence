@@ -485,8 +485,6 @@ class AttendanceApp:
 	def call_workflow(self) -> None:
 		try:
 			start_call(self.phone_number or "")
-			self.root.after(0, lambda: self.status.set("Waiting for the attendee to answer..."))
-			wait_for_call_active()
 			self.root.after(0, lambda: self.status.set("Call answered. Starting video in 9 seconds..."))
 			time.sleep(VIDEO_DELAY_AFTER_ANSWER_SECONDS)
 			self.root.after(0, self.open_prompt_screen)
