@@ -21,6 +21,7 @@ FACE_MODEL_PATH = Path(__file__).parent / "models" / "haarcascade_frontalface_de
 PAPPU_CUTOUT_PATH = Path(__file__).parent / "pappuvideo.mp4"
 VOICE_PATH = Path(__file__).parent / "pappu.wav"
 SNAPSHOT_AUDIO_PATH = Path(__file__).parent / "pha.wav"
+FRAME_PATH = Path(__file__).parent / "frame.png"
 FLOWER_STICKER_PATH = Path(__file__).parent / "flower_sticker.png"
 SNAPSHOT_DIR = Path(__file__).parent / "snapshots"
 
@@ -302,17 +303,24 @@ def show_snapshot_screen(snapshot_path: Path) -> tk.Toplevel:
 	window.protocol("WM_DELETE_WINDOW", window.destroy)
 	label = tk.Label(window, text="You are absent today", bg="#111827", fg="#fca5a5", font=("Segoe UI", 16, "bold"))
 	label.pack(pady=(14, 6))
-	image_label = tk.Label(window, bg="#111827")
-	image_label.pack(expand=True, padx=20, pady=(0, 20))
+	image_canvas = tk.Canvas(window, width=600, height=420, bg="#111827", highlightthickness=0)
+	image_canvas.pack(expand=True, padx=20, pady=(0, 20))
 	try:
 		with Image.open(snapshot_path) as source:
 			image = source.convert("RGB")
 			image.thumbnail((600, 420), Image.Resampling.LANCZOS)
 			photo = ImageTk.PhotoImage(image)
-		image_label.configure(image=photo)
-		image_label.image = photo
+		image_canvas.create_image(300, 210, image=photo)
+		image_canvas.image = photo
+		if FRAME_PATH.exists():
+			with Image.open(FRAME_PATH) as source:
+				frame = source.convert("RGBA").rotate(90, expand=True)
+				frame.thumbnail((600, 420), Image.Resampling.LANCZOS)
+			frame_photo = ImageTk.PhotoImage(frame)
+			image_canvas.create_image(300, 210, image=frame_photo)
+			image_canvas.frame_image = frame_photo
 	except (OSError, UnidentifiedImageError, tk.TclError):
-		image_label.configure(text=f"Could not open captured photo:\n{snapshot_path}", fg="#fca5a5", font=("Segoe UI", 12))
+		image_canvas.create_text(300, 210, text=f"Could not open captured photo:\n{snapshot_path}", fill="#fca5a5", font=("Segoe UI", 12))
 	if SNAPSHOT_AUDIO_PATH.exists():
 		winsound.PlaySound(str(SNAPSHOT_AUDIO_PATH), winsound.SND_FILENAME | winsound.SND_ASYNC)
 	return window
