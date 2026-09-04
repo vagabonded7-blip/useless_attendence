@@ -75,7 +75,17 @@ The app starts a real phone call after a face is detected and a phone number is 
 For Software:
 
 # Screenshots
-The application captures attendance snapshots locally in the `snapshots/` folder. Each snapshot contains the detected face and flower decorations.
+The following screenshots document the application workflow. Runtime attendance photos remain local in the ignored `snapshots/` folder.
+
+![Face detection](screenshot/1.png)
+
+![Attendance call](screenshot/2.png)
+
+![Fan animation](screenshot/3.png)
+
+![Snapshot view](screenshot/4.png)
+
+![Final application](screenshot/5.png)
 
 # Diagrams
 ```mermaid
