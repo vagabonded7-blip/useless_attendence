@@ -39,10 +39,37 @@ For Hardware:
 ### Implementation
 For Software:
 # Installation
-[commands]
+This project uses a webcam, Windows audio playback, and Android Debug Bridge (ADB), so it runs locally on a Windows computer rather than on a cloud web server.
+
+Clone the repository:
+
+```powershell
+git clone https://github.com/vagabonded7-blip/useless_attendence.git
+cd useless_attendence
+```
+
+Create and activate a virtual environment, then install the dependencies:
+
+```powershell
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+```
+
+Connect an Android phone with USB debugging enabled and confirm ADB can detect it:
+
+```powershell
+.\platform-tools\adb.exe devices
+```
+
+Accept the USB debugging authorization prompt on the phone. Make sure the webcam is available before starting the app.
 
 # Run
-[commands]
+```powershell
+python attendence.py
+```
+
+The app starts a real phone call after a face is detected and a phone number is entered, so use a test number when trying it.
 
 ### Project Documentation
 For Software:
