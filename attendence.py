@@ -26,7 +26,7 @@ SNAPSHOT_DIR = Path(__file__).parent / "snapshots"
 CALL_WAIT_SECONDS = 60
 CALL_AUDIO_FALLBACK_SECONDS = 10
 ADB_RECONNECT_SECONDS = 8
-VIDEO_DELAY_AFTER_ANSWER_SECONDS = 7
+VIDEO_DELAY_AFTER_ANSWER_SECONDS = 9
 
 
 def normalize_phone_number(value: str) -> str:
@@ -322,6 +322,7 @@ def show_fan_animation(on_complete) -> tk.Toplevel:
 	window.configure(bg="#dbeafe")
 	window.protocol("WM_DELETE_WINDOW", window.destroy)
 	tk.Label(window, text="Cooling down before the snapshot...", bg="#dbeafe", fg="#1e3a8a", font=("Segoe UI", 16, "bold")).pack(pady=(18, 8))
+	tk.Label(window, text="you  re so hot ,u need some kaatt", bg="#dbeafe", fg="#1e3a8a", font=("Segoe UI", 14)).pack(pady=(0, 8))
 	canvas = tk.Canvas(window, width=420, height=360, bg="#dbeafe", highlightthickness=0)
 	canvas.pack(expand=True)
 	center_x, center_y = 210, 180
@@ -471,7 +472,7 @@ class AttendanceApp:
 			start_call(self.phone_number or "")
 			self.root.after(0, lambda: self.status.set("Waiting for the attendee to answer..."))
 			wait_for_call_active()
-			self.root.after(0, lambda: self.status.set("Call answered. Starting video in 7 seconds..."))
+			self.root.after(0, lambda: self.status.set("Call answered. Starting video in 9 seconds..."))
 			time.sleep(VIDEO_DELAY_AFTER_ANSWER_SECONDS)
 			self.root.after(0, self.open_prompt_screen)
 			self.root.after(0, lambda: self.status.set("Call answered. Playing the video and voice message..."))
