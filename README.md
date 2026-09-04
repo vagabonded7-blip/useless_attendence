@@ -2,39 +2,39 @@
 
 
 
-# [Project Name] 🎯
+# Useless Attendance System 🎯
 
 
 ## Basic Details
-### Team Name: [Name]
+### Team Name: The Attendance Avengers
 
 
 ### Team Members
-- Team Lead: [Name] - [College]
-- Member 2: [Name] - [College]
-- Member 3: [Name] - [College]
+- Member 1: Swathi Lakshmi O - College of Engineering Vadakara
+- Member 2: Nandana P - College of Engineering Vadakara
 
 ### Project Description
-[2-3 lines about what your project does]
+A humorous face-recognition attendance system that detects a person, initiates an attendance call through an Android phone, plays a video and voice message, captures a snapshot, and decorates it with flowers.
 
 ### The Problem (that doesn't exist)
-[What ridiculous problem are you solving?]
+No one takes a snap of us while we register attendance.
 
 ### The Solution (that nobody asked for)
-[The system detects a face, starts an attendance call through an Android phone, plays a funny video and voice message, then captures a flower-decorated snapshot as proof of attendance.]
+The system detects a face, starts an attendance call through an Android phone, plays a funny video and voice message, then captures a flower-decorated snapshot as proof of attendance.
 
 ## Technical Details
 ### Technologies/Components Used
 For Software:
-- [Languages used]
-- [Frameworks used]
-- [Libraries used]
-- [Tools used]
+- Python
+- Tkinter desktop UI
+- OpenCV, Pillow
+- Android Debug Bridge (ADB), Wokwi
 
 For Hardware:
-- [List main components]
-- [List specifications]
-- [List tools required]
+- Windows PC with webcam and speakers
+- Android phone with USB debugging enabled
+- USB cable and bundled ADB platform tools
+- Optional Arduino Uno and servo motor for the Wokwi fan simulation
 
 ### Implementation
 For Software:
@@ -74,51 +74,39 @@ The app starts a real phone call after a face is detected and a phone number is 
 ### Project Documentation
 For Software:
 
-# Screenshots (Add at least 3)
-![Screenshot1](Add screenshot 1 here with proper name)
-*Add caption explaining what this shows*
-
-![Screenshot2](Add screenshot 2 here with proper name)
-*Add caption explaining what this shows*
-
-![Screenshot3](Add screenshot 3 here with proper name)
-*Add caption explaining what this shows*
+# Screenshots
+The application captures attendance snapshots locally in the `snapshots/` folder. Each snapshot contains the detected face and flower decorations.
 
 # Diagrams
-![Workflow](Add your workflow/architecture diagram here)
-*Add caption explaining your workflow*
+```mermaid
+flowchart TD
+	A[Webcam detects face] --> B[Enter phone number]
+	B --> C[ADB starts phone call]
+	C --> D[Wait for answered call]
+	D --> E[Play video and voice message]
+	E --> F[Show rotating fan animation]
+	F --> G[Display flower-decorated snapshot]
+```
 
 For Hardware:
 
 # Schematic & Circuit
-![Circuit](Add your circuit diagram here)
-*Add caption explaining connections*
-
-![Schematic](Add your schematic diagram here)
-*Add caption explaining the schematic*
+The optional Wokwi simulation connects an Arduino Uno to a servo motor. The servo signal connects to pin 9, with power from 5V and ground connected to GND.
 
 # Build Photos
-![Components](Add photo of your components here)
-*List out all components shown*
-
-![Build](Add photos of build process here)
-*Explain the build steps*
-
-![Final](Add photo of final product here)
-*Explain the final build*
+![Components](flower_sticker.png)
+The main build is software-based and uses a webcam, Windows PC, Android phone, USB cable, and speakers. The optional fan hardware can be tested in the Wokwi project under `wokwi/`.
 
 ### Project Demo
 # Video
-[Add your demo video link here]
-*Explain what the video demonstrates*
+The demo video is included in the repository as `pappuvideo.mp4`.
 
 # Additional Demos
-[Add any extra demo materials/links]
+The optional Wokwi fan simulation is documented in [`wokwi/README.md`](wokwi/README.md).
 
 ## Team Contributions
-- [Name 1]: [Specific contributions]
-- [Name 2]: [Specific contributions]
-- [Name 3]: [Specific contributions]
+- Swathi Lakshmi O: Face detection, attendance workflow, and integration testing.
+- Nandana P: User experience, media assets, snapshot presentation, and documentation.
 
 ---
 Made with ❤️ at TinkerHub Useless Projects 
