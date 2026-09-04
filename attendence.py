@@ -21,7 +21,6 @@ FACE_MODEL_PATH = Path(__file__).parent / "models" / "haarcascade_frontalface_de
 PAPPU_CUTOUT_PATH = Path(__file__).parent / "pappuvideo.mp4"
 VOICE_PATH = Path(__file__).parent / "pappu.wav"
 SNAPSHOT_AUDIO_PATH = Path(__file__).parent / "pha.wav"
-FRAME_PATH = Path(__file__).parent / "frame.png"
 FLOWER_STICKER_PATH = Path(__file__).parent / "flower_sticker.png"
 SNAPSHOT_DIR = Path(__file__).parent / "snapshots"
 
@@ -311,13 +310,20 @@ def show_snapshot_screen(snapshot_path: Path) -> tk.Toplevel:
 			photo = ImageTk.PhotoImage(image)
 		image_canvas.create_image(300, 210, image=photo)
 		image_canvas.image = photo
-		if FRAME_PATH.exists():
-			with Image.open(FRAME_PATH) as source:
-				frame = source.convert("RGBA").rotate(90, expand=True)
-				frame = frame.resize((600, 420), Image.Resampling.LANCZOS)
-			frame_photo = ImageTk.PhotoImage(frame)
-			image_canvas.create_image(300, 210, image=frame_photo)
-			image_canvas.frame_image = frame_photo
+		if FLOWER_STICKER_PATH.exists():
+			with Image.open(FLOWER_STICKER_PATH) as source:
+				flower = source.convert("RGBA")
+			flower_images = []
+			for position, rotation in [
+				((42, 28), 0), ((150, 28), 12), ((300, 28), -8), ((450, 28), 10), ((558, 28), 0),
+				((42, 392), 180), ((150, 392), 168), ((300, 392), 188), ((450, 392), 170), ((558, 392), 180),
+				((24, 120), -90), ((24, 285), -90), ((576, 120), 90), ((576, 285), 90),
+			]:
+				flower_image = ImageOps.contain(flower.rotate(rotation, expand=True), (82, 82), Image.Resampling.LANCZOS)
+				flower_photo = ImageTk.PhotoImage(flower_image)
+				flower_images.append(flower_photo)
+				image_canvas.create_image(*position, image=flower_photo)
+			image_canvas.flower_images = flower_images
 	except (OSError, UnidentifiedImageError, tk.TclError):
 		image_canvas.create_text(300, 210, text=f"Could not open captured photo:\n{snapshot_path}", fill="#fca5a5", font=("Segoe UI", 12))
 	if SNAPSHOT_AUDIO_PATH.exists():
