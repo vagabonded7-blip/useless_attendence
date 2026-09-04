@@ -284,8 +284,8 @@ def apply_sticker(frame, x: int, y: int, width: int, height: int):
 
 def show_prompt_screen() -> tk.Toplevel:
 	return show_visual_screen(
-		"Absent today",
-		"You are absent today",
+		"Question",
+		"",
 		PAPPU_CUTOUT_PATH,
 		"#fff7ed",
 		"#9a3412",
@@ -456,7 +456,7 @@ class AttendanceApp:
 		snapshot_path = self.snapshot_path
 		if snapshot_path is not None:
 			show_snapshot_screen(snapshot_path)
-		self.status.set("You are absent today. Ready for the next person.")
+		self.status.set("Call message played. Ready for the next person.")
 		self.reset_for_next_person()
 
 	def close_prompt_screen(self) -> None:
