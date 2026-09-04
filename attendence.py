@@ -324,7 +324,6 @@ def show_fan_animation(on_complete) -> tk.Toplevel:
 	window.geometry("640x520")
 	window.configure(bg="#dbeafe")
 	window.protocol("WM_DELETE_WINDOW", window.destroy)
-	tk.Label(window, text="Cooling down before the snapshot...", bg="#dbeafe", fg="#1e3a8a", font=("Segoe UI", 16, "bold")).pack(pady=(18, 8))
 	tk.Label(window, text="you  re so hot ,u need some kaatt", bg="#dbeafe", fg="#1e3a8a", font=("Segoe UI", 14)).pack(pady=(0, 8))
 	canvas = tk.Canvas(window, width=420, height=360, bg="#dbeafe", highlightthickness=0)
 	canvas.pack(expand=True)
