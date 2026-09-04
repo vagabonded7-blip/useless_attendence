@@ -2,6 +2,7 @@
 
 import os
 import re
+import math
 import subprocess
 import threading
 import time
@@ -260,7 +261,7 @@ def apply_sticker(frame, x: int, y: int, width: int, height: int):
 	sticker = cv2.imread(str(FLOWER_STICKER_PATH), cv2.IMREAD_UNCHANGED)
 	if sticker is None or sticker.shape[2] != 4:
 		return frame
-	sticker_width = max(int(width * 0.55), 1)
+	sticker_width = max(int(width * 0.825), 1)
 	sticker_height = max(int(sticker.shape[0] * sticker_width / sticker.shape[1]), 1)
 	sticker = cv2.resize(sticker, (sticker_width, sticker_height), interpolation=cv2.INTER_AREA)
 	# Place the flower sticker very close to the right ear of the detected face.
@@ -311,6 +312,64 @@ def show_snapshot_screen(snapshot_path: Path) -> tk.Toplevel:
 		image_label.image = photo
 	except (OSError, UnidentifiedImageError, tk.TclError):
 		image_label.configure(text=f"Could not open captured photo:\n{snapshot_path}", fg="#fca5a5", font=("Segoe UI", 12))
+	return window
+
+
+def show_fan_animation(on_complete) -> tk.Toplevel:
+	window = tk.Toplevel()
+	window.title("Cooling down")
+	window.geometry("640x520")
+	window.configure(bg="#dbeafe")
+	window.protocol("WM_DELETE_WINDOW", window.destroy)
+	tk.Label(window, text="Cooling down before the snapshot...", bg="#dbeafe", fg="#1e3a8a", font=("Segoe UI", 16, "bold")).pack(pady=(18, 8))
+	canvas = tk.Canvas(window, width=420, height=360, bg="#dbeafe", highlightthickness=0)
+	canvas.pack(expand=True)
+	center_x, center_y = 210, 180
+	blade_length = 125
+	blade_width = 34
+	angle = 0
+	completed = False
+
+	def finish() -> None:
+		nonlocal completed
+		if completed:
+			return
+		completed = True
+		if window.winfo_exists():
+			window.destroy()
+		on_complete()
+
+	def animate() -> None:
+		nonlocal angle
+		if not window.winfo_exists() or completed:
+			return
+		canvas.delete("all")
+		canvas.create_oval(center_x - 18, center_y - 18, center_x + 18, center_y + 18, fill="#334155", outline="")
+		for blade_index in range(4):
+			blade_angle = math.radians(angle + blade_index * 90 - 90)
+			perpendicular_x = -math.sin(blade_angle)
+			perpendicular_y = math.cos(blade_angle)
+			direction_x = math.cos(blade_angle)
+			direction_y = math.sin(blade_angle)
+			canvas.create_polygon(
+				center_x + perpendicular_x * blade_width / 2,
+				center_y + perpendicular_y * blade_width / 2,
+				center_x + direction_x * blade_length + perpendicular_x * blade_width / 2,
+				center_y + direction_y * blade_length + perpendicular_y * blade_width / 2,
+				center_x + direction_x * blade_length - perpendicular_x * blade_width / 2,
+				center_y + direction_y * blade_length - perpendicular_y * blade_width / 2,
+				center_x - perpendicular_x * blade_width / 2,
+				center_y - perpendicular_y * blade_width / 2,
+				fill="#2563eb",
+				outline="#1d4ed8",
+				width=2,
+			)
+		canvas.create_oval(center_x - 10, center_y - 10, center_x + 10, center_y + 10, fill="#f59e0b", outline="")
+		angle = (angle + 12) % 360
+		window.after(40, animate)
+
+	animate()
+	window.after(1800, finish)
 	return window
 
 
@@ -455,7 +514,7 @@ class AttendanceApp:
 		self.close_prompt_screen()
 		snapshot_path = self.snapshot_path
 		if snapshot_path is not None:
-			show_snapshot_screen(snapshot_path)
+			show_fan_animation(lambda: show_snapshot_screen(snapshot_path))
 		self.status.set("Call message played. Ready for the next person.")
 		self.reset_for_next_person()
 
