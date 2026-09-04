@@ -315,7 +315,7 @@ def show_snapshot_screen(snapshot_path: Path) -> tk.Toplevel:
 		if FRAME_PATH.exists():
 			with Image.open(FRAME_PATH) as source:
 				frame = source.convert("RGBA").rotate(90, expand=True)
-				frame.thumbnail((600, 420), Image.Resampling.LANCZOS)
+				frame = frame.resize((600, 420), Image.Resampling.LANCZOS)
 			frame_photo = ImageTk.PhotoImage(frame)
 			image_canvas.create_image(300, 210, image=frame_photo)
 			image_canvas.frame_image = frame_photo
