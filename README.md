@@ -28,13 +28,12 @@ For Software:
 - Python
 - Tkinter desktop UI
 - OpenCV, Pillow
-- Android Debug Bridge (ADB), Wokwi
+- Android Debug Bridge (ADB)
 
 For Hardware:
 - Windows PC with webcam and speakers
 - Android phone with USB debugging enabled
 - USB cable and bundled ADB platform tools
-- Optional Arduino Uno and servo motor for the Wokwi fan simulation
 
 ### Implementation
 For Software:
@@ -101,18 +100,13 @@ flowchart TD
 For Hardware:
 
 # Schematic & Circuit
-The optional Wokwi simulation connects an Arduino Uno to a servo motor. The servo signal connects to pin 9, with power from 5V and ground connected to GND.
-
 # Build Photos
 ![Components](flower_sticker.png)
-The main build is software-based and uses a webcam, Windows PC, Android phone, USB cable, and speakers. The optional fan hardware can be tested in the Wokwi project under `wokwi/`.
+The main build is software-based and uses a webcam, Windows PC, Android phone, USB cable, and speakers.
 
 ### Project Demo
 # Video
 The demo video is included in the repository as `pappuvideo.mp4`.
-
-# Additional Demos
-The optional Wokwi fan simulation is documented in [`wokwi/README.md`](wokwi/README.md).
 
 ## Team Contributions
 - Swathi Lakshmi O: Face detection, attendance workflow, and integration testing.
