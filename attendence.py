@@ -120,7 +120,7 @@ def wait_for_call_active(timeout: int = CALL_WAIT_SECONDS) -> None:
 		else:
 			time.sleep(1)
 			continue
-		if re.search(r"\b(?:state|State)\s*[:=]\s*ACTIVE\b", telecom):
+		if re.search(r"\b(?:state|State)\s*[:=]\s*ACTIVE\b|\bOFFHOOK\b|\bmCallState\s*[=:]\s*2\b", telecom, re.IGNORECASE):
 			return
 		time.sleep(1)
 	if not state_was_read:
