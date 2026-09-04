@@ -20,6 +20,7 @@ ADB_PATH = Path(__file__).parent / "platform-tools" / "adb.exe"
 FACE_MODEL_PATH = Path(__file__).parent / "models" / "haarcascade_frontalface_default.xml"
 PAPPU_CUTOUT_PATH = Path(__file__).parent / "pappuvideo.mp4"
 VOICE_PATH = Path(__file__).parent / "pappu.wav"
+SNAPSHOT_AUDIO_PATH = Path(__file__).parent / "pha.wav"
 FLOWER_STICKER_PATH = Path(__file__).parent / "flower_sticker.png"
 SNAPSHOT_DIR = Path(__file__).parent / "snapshots"
 
@@ -312,6 +313,8 @@ def show_snapshot_screen(snapshot_path: Path) -> tk.Toplevel:
 		image_label.image = photo
 	except (OSError, UnidentifiedImageError, tk.TclError):
 		image_label.configure(text=f"Could not open captured photo:\n{snapshot_path}", fg="#fca5a5", font=("Segoe UI", 12))
+	if SNAPSHOT_AUDIO_PATH.exists():
+		winsound.PlaySound(str(SNAPSHOT_AUDIO_PATH), winsound.SND_FILENAME | winsound.SND_ASYNC)
 	return window
 
 
@@ -370,7 +373,7 @@ def show_fan_animation(on_complete) -> tk.Toplevel:
 		window.after(40, animate)
 
 	animate()
-	window.after(1800, finish)
+	window.after(10000, finish)
 	return window
 
 
